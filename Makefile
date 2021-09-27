@@ -1,6 +1,8 @@
 deploy:
 	python3 vi/flare/tools/flare.py -s `pwd`/vi -t ../../deploy/vi -z -m -c -n vi
 
+debug: develop
+
 develop:
 	python3 vi/flare/tools/flare.py -s `pwd`/vi -t ../../deploy/vi -n vi
 

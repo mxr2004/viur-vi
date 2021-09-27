@@ -130,6 +130,75 @@ def formatOneEntry(key, format, data, structure=None, prefix=None, language=None
     return res
 
 
+# formatString ---------------------------------------------------------------------------------------------------------
+
+def formatOneEntry(key, format, data, structure=None, prefix=None, language=None, context=None, _rec=0):
+    res = format
+    val = data[key]
+
+    # Get structure if available
+    struct = structure.get(key) if structure else None
+    if isinstance(struct, list):
+        struct = {k: v for k, v in struct}
+
+    if isinstance(val, dict):  # if bone is multilang, only render current lang
+        if struct and ("$(%s)" % ".".join(prefix + [key])) in res:
+            langs = struct.get("languages")
+            if langs:
+                if language and language in langs:
+                    val = val.get(language, "")
+                else:
+                    val = ", ".join([str(value) for value in val.values()])
+
+            else:
+                return ""
+
+        else:
+            res = formatString(
+                res, val, structure, prefix + [key], language, _rec=_rec + 1
+            )
+
+    elif isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):  # if bone is relationalbone with rel and dest
+        if struct and "dest" in val[0] and "rel" in val[0]:
+            if "relskel" in struct and "format" in struct:
+                format = struct["format"]
+                struct = struct["relskel"]
+
+            res = res.replace(
+                "$(%s)" % ".".join(prefix + [key]),
+                ", ".join(
+                    [
+                        formatString(format, v, struct, [], language, _rec=_rec + 1)
+                        for v in val
+                    ]
+                ),
+            )
+        else:
+            res = formatString(
+                res, val[0], struct, prefix + [key], language, _rec=_rec + 1
+            )
+
+    elif isinstance(val, list):  # list values like multistr
+        val = ", ".join(map(str, val))
+
+    # Check for select-bones
+    if (
+            isinstance(struct, dict) and "values" in struct and struct["values"]
+    ):  # if selectbone translate key to value
+        vals = struct["values"]
+
+        if isinstance(vals, list):
+            vals = {k: v for k, v in vals}
+
+        # NO elif!
+        if isinstance(vals, dict):
+            if val in vals:
+                val = vals[val]
+
+    res = res.replace("$(%s)" % (".".join(prefix + [key])), str(val))
+    return res
+
+
 def formatString(format, data, structure=None, prefix=None, language=None, context=None, _rec=0):
     """Parses a string given by format and substitutes placeholders using values specified by data.
     The syntax for the placeholders is $(%s).
@@ -151,6 +220,7 @@ def formatString(format, data, structure=None, prefix=None, language=None, conte
     :return: The traversed string with the replaced values.
     :rtype: str
     """
+    #print("FORMAT STRING", format, data, structure, prefix)
     if structure and isinstance(structure, list):
         structure = {k: v for k, v in structure}
 
