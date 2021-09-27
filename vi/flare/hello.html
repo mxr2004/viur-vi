@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="assets/css/style.css"/>
+
+	<script src="assets/js/flare.js"></script>
+	<script>
+		window.addEventListener(
+				"load",
+				() => {
+					new flare({
+                        // Packages to preload. This can also be specified in the kickoff-code as import.
+                        //packages: ["python-dateutil"],
+
+						// Fetch location for locally available Python modules
+						fetch: {
+							"flare": {
+								"path": "flare"
+							}
+						},
+
+						// Python code to be finally executed
+						// language=Python
+						kickoff: `
+from flare import *
+html5.Body().appendChild('<a href="https://www.viur.dev">Hello World</a>')
+flare.popup.Alert("Hello World")
+`
+					});
+				});
+	</script>
+</head>
+<body class="is-loading">
+</body>
+</html>
